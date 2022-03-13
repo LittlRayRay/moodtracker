@@ -1,5 +1,9 @@
+/*
+true
+*/
 use chrono::prelude::*;
 use std::str::FromStr;
+use std::str::ParseBoolError;
 
 // use serde_json; 
 
@@ -14,14 +18,24 @@ fn main() {
     if list.contains(&(first_line.to_string(), true)) || list.contains(&(first_line.to_string(), false)) {
         println!("You have already done today's moodtracker!");
     } else {
-        println!("Are you feeling good today?");
-    	let mut input = String::new();
-    	
-    	std::io::stdin().read_line(&mut input).unwrap();
-    	
-        let input_slice: &str = &input[..];
-        let is_happy: bool = bool::from_str(input_slice).unwrap();
+        loop {
 
-        println!("{:?}", is_happy);
+            println!("Are you feeling good today?");
+        	let mut input = String::new();
+        	
+        	std::io::stdin().read_line(&mut input).unwrap();
+        	
+            let input_slice: &str = &input[..];
+            let t:Result<bool, ParseBoolError>= input_slice.trim().parse();
+
+            match t {
+                Ok(_input) => {
+                    println!("Thanks for the input!");
+                    break
+                },
+
+                Err(_error) => {println!("Something went wrong!"); println!("Please enter 'true' or 'false'")}
+            }
+        }
     }
 } 
