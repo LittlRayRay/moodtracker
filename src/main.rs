@@ -7,6 +7,9 @@ use std::str::ParseBoolError;
 // use json::object; 
 use serde::Serialize;
 use serde::Deserialize;
+use std::fs::File;
+use std::io::prelude::*;
+use std::io::BufReader;
 
 #[derive(Serialize, Deserialize, Debug)]
 struct Day {
@@ -19,14 +22,17 @@ fn test(arg1: String) -> i64 {
 }
 
 fn main() {
-    let utc: DateTime<Utc> = Utc::now();
-    let new_utc = utc.to_string();
-    let first_line = &new_utc[..10];
-    println!("{}", first_line);
-    let mut list: Vec<Day> = Vec::new();
+    let mut file = File::create("test.json").expect("failed to open file");
+    
+    //let file_read = File::open("save.json").expect("failed to open file");
+    let reader = BufReader::new(file);
+
+    let mut list: Vec<Day>= serde_json::from_reader(reader).expect("read file");
+    
+    //let mut list: Vec<Day> = Vec::new();
     let mut i = 0;
     while i < 2{
-        loop {
+        'main: loop {
             println!("Are you feeling good today?");
             let mut input = String::new();
               
@@ -50,7 +56,7 @@ fn main() {
                     for day in &list{
                         if day.date == buffer {
                             println!("You have already done today's moodtracker!");
-                            break;
+                            break 'main;
                         }
 
                     }
@@ -72,5 +78,8 @@ fn main() {
     let serialised= serde_json::to_string(&list).unwrap();
 
     println!("serialised = {}", serialised);
+
+   // file.write_all(&serialised.into_bytes()).expect("failed to write to file");
+
 
 }
