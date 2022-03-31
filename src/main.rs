@@ -1,9 +1,7 @@
 /*
 tue
 */
-#![allow(unused_variables, unused_imports)]
-use chrono::prelude::*;
-use core::time;
+#![allow(unused_variables)]
 use std::str::ParseBoolError;
 // use json::object; 
 use serde::Serialize;
@@ -33,39 +31,21 @@ impl Settings {
     }
 }
 
-fn init_settings (admin_setting: bool, times: u8) {
-    Settings::new(admin_setting, times); 
+fn init_settings (admin_setting: bool, times: u8) -> Settings{
+    Settings::new(admin_setting, times)
 }
 
-fn main() {
-    // File reader and creat-er system thingy COPYRIGHT TheAverageAvocado 2022 https://github.com/LittlRayRay 
-   
-    init_settings(true, 2);
+fn input_system(list: &mut Vec<Day>, settings: &Settings) {
+        
+    let mut count = 0;
 
-    let mut exists: bool= false;
-    let mut list: Vec<Day> = Vec::new();
-
-    if Path::new("save.json").exists(){
-        exists = true;
-    }
-    
-    if exists {
-        let reader = BufReader::new(File::open("save.json").expect("failed to read save.json")); 
-        list= serde_json::from_reader(reader).expect("file exists, could not read it");
-    }
-
-    list.push(Day { date: "woday haha".to_string(), feeling_good: true}); 
-
-    // Now we can insert our logic for the actual system here
-    // TODO Transfer old system, mostly same code.
-   
-    let count = 0;
-
-   'main: loop{
-
-        if count == 2 {
+    'main: loop{
+        
+        if count == settings.times_to_enter {
             break;
         }
+
+        count += 1;
 
         println!("feeling good?");
         let mut input = String::new();
@@ -87,7 +67,7 @@ fn main() {
 
                 buffer = buffer.trim().to_string(); 
 
-                for day in &list {
+                for day in list.iter() {
                     if day.date == buffer {
                         println!("already done!");
                         break 'main;
@@ -102,11 +82,40 @@ fn main() {
         }
     }
 
+}
+
+fn write_to_file(list: &Vec<Day>){
     let mut file = File::create("save.json").expect("failed to create file");
 
-    let serialised = serde_json::to_string(&list).unwrap();
+    let serialised = serde_json::to_string(list).unwrap();
 
     file.write_all(&serialised.into_bytes()).expect("failed to write to file"); 
+
+}
+
+fn main() {
+    // File reader and creat-er system thingy COPYRIGHT TheAverageAvocado 2022 https://github.com/LittlRayRay 
+   
+    let settings = init_settings(true, 2);
+
+    let mut exists: bool= false;
+    let mut list: Vec<Day> = Vec::new();
+
+    if Path::new("save.json").exists(){
+        exists = true;
+    }
+    
+    if exists {
+        let reader = BufReader::new(File::open("save.json").expect("failed to read save.json")); 
+        list= serde_json::from_reader(reader).expect("file exists, could not read it");
+    }
+
+    input_system(&mut list, &settings);
+
+    // Now we can insert our logic for the actual system here
+    // TODO Transfer old system, mostly same code. 
+
+    write_to_file(&list);
 
     /*
 
