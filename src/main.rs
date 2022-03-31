@@ -1,8 +1,9 @@
 /*
 tue
 */
-#![allow(dead_code, unused_variables, unused_imports)]
+#![allow(unused_variables, unused_imports)]
 use chrono::prelude::*;
+use core::time;
 use std::str::ParseBoolError;
 // use json::object; 
 use serde::Serialize;
@@ -10,6 +11,7 @@ use serde::Deserialize;
 use std::fs::File;
 use std::io::prelude::*;
 use std::io::BufReader;
+use std::path::Path;
 
 #[derive(Serialize, Deserialize, Debug)]
 struct Day {
@@ -17,12 +19,98 @@ struct Day {
     feeling_good: bool
 }
 
-fn test(arg1: String) -> i64 {
-    0
+struct Settings {
+    admin: bool,
+    times_to_enter: u8 
+}
+
+impl Settings {
+    fn new(admin_buffer: bool, times_to_enter_buffer: u8)  -> Settings{
+        Settings {
+            admin: admin_buffer,
+            times_to_enter: times_to_enter_buffer
+        }
+    }
+}
+
+fn init_settings (admin_setting: bool, times: u8) {
+    Settings::new(admin_setting, times); 
 }
 
 fn main() {
-    let mut file = File::create("test.json").expect("failed to open file");
+    // File reader and creat-er system thingy COPYRIGHT TheAverageAvocado 2022 https://github.com/LittlRayRay 
+   
+    init_settings(true, 2);
+
+    let mut exists: bool= false;
+    let mut list: Vec<Day> = Vec::new();
+
+    if Path::new("save.json").exists(){
+        exists = true;
+    }
+    
+    if exists {
+        let reader = BufReader::new(File::open("save.json").expect("failed to read save.json")); 
+        list= serde_json::from_reader(reader).expect("file exists, could not read it");
+    }
+
+    list.push(Day { date: "woday haha".to_string(), feeling_good: true}); 
+
+    // Now we can insert our logic for the actual system here
+    // TODO Transfer old system, mostly same code.
+   
+    let count = 0;
+
+   'main: loop{
+
+        if count == 2 {
+            break;
+        }
+
+        println!("feeling good?");
+        let mut input = String::new();
+
+        std::io::stdin().read_line(&mut input).unwrap();
+
+        let input_slice: &str = &input[..];
+        let t:Result<bool, ParseBoolError>= input_slice.trim().parse();
+
+        match t {
+            Ok(input) => {
+                println!("processing...");
+
+                let mut buffer = String::new(); 
+
+                println!("date: ");
+                
+                std::io::stdin().read_line(&mut buffer).unwrap();
+
+                buffer = buffer.trim().to_string(); 
+
+                for day in &list {
+                    if day.date == buffer {
+                        println!("already done!");
+                        break 'main;
+                    }
+                }
+
+                list.push(Day{date: buffer, feeling_good: input});
+
+            },
+
+            Err(err) => {println!("Something went wrong");}
+        }
+    }
+
+    let mut file = File::create("save.json").expect("failed to create file");
+
+    let serialised = serde_json::to_string(&list).unwrap();
+
+    file.write_all(&serialised.into_bytes()).expect("failed to write to file"); 
+
+    /*
+
+    let file = File::create("test.json").expect("failed to open file");
     
     //let file_read = File::open("save.json").expect("failed to open file");
     let reader = BufReader::new(file);
@@ -80,6 +168,7 @@ fn main() {
     println!("serialised = {}", serialised);
 
    // file.write_all(&serialised.into_bytes()).expect("failed to write to file");
-
+    
+    */
 
 }
