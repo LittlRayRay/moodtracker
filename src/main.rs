@@ -1,30 +1,34 @@
 #![allow(unused_variables, dead_code)]
 use std::io;
 use std::str::ParseBoolError;
-// use json::object; 
-use serde::Serialize;
+// use json::object;
 use serde::Deserialize;
+use serde::Serialize;
 use std::fs::File;
 use std::io::prelude::*;
 use std::io::BufReader;
 use std::path::Path;
+use std::env;
 
+// Data structure for each day, storing how the day went and the date.
 #[derive(Serialize, Deserialize, Debug)]
 struct Day {
     date: String,
-    feeling_good: bool
+    feeling_good: bool,
 }
 
+// Settings for the user, changeable at any time (hopefully)
 struct Settings {
     admin: bool,
-    times_to_enter: u8 
+    times_to_enter: u8,
 }
 
 impl Settings {
-    fn new(admin_buffer: bool, times_to_enter_buffer: u8)  -> Settings{
+    // Default settings for the user to use
+    fn new(admin_buffer: bool, times_to_enter_buffer: u8) -> Settings {
         Settings {
             admin: admin_buffer,
-            times_to_enter: times_to_enter_buffer
+            times_to_enter: times_to_enter_buffer,
         }
     }
 }
@@ -38,11 +42,9 @@ fn init_settings (admin_setting: bool, times: u8) -> Settings{
 /// fn input_sytem() {};
 /// ```
 fn input_system(list: &mut Vec<Day>, settings: &Settings) {
-        
     let mut count = 0;
 
-    'main: loop{
-        
+    'main: loop {
         if count == settings.times_to_enter {
             break;
         }
@@ -55,19 +57,19 @@ fn input_system(list: &mut Vec<Day>, settings: &Settings) {
         std::io::stdin().read_line(&mut input).unwrap();
 
         let input_slice: &str = &input[..];
-        let t:Result<bool, ParseBoolError>= input_slice.trim().parse();
+        let t: Result<bool, ParseBoolError> = input_slice.trim().parse();
 
         match t {
             Ok(input) => {
                 println!("processing...\n - Saving Input \n \n Get ready to enter date of admission!");
 
-                let mut buffer = String::new(); 
+                let mut buffer = String::new();
 
                 println!("date: ");
-                
+
                 std::io::stdin().read_line(&mut buffer).unwrap();
 
-                buffer = buffer.trim().to_string(); 
+                buffer = buffer.trim().to_string();
 
                 for day in list.iter() {
                     if day.date == buffer {
@@ -76,23 +78,28 @@ fn input_system(list: &mut Vec<Day>, settings: &Settings) {
                     }
                 }
 
-                list.push(Day{date: buffer, feeling_good: input});
+                list.push(Day {
+                    date: buffer,
+                    feeling_good: input,
+                });
+            }
 
-            },
-
-            Err(err) => {println!("Something went wrong");}
+            Err(err) => {
+                println!("Something went wrong");
+            }
         }
     }
-
 }
 
-fn write_to_file(list: &Vec<Day>){
+fn write_to_file(list: &Vec<Day>) {
     let mut file = File::create("save.json").expect("failed to create file");
 
-    let serialised = serde_json::to_string(list).unwrap();
+    let serialised = serde_json::to_string_pretty(list).unwrap();
 
-    file.write_all(&serialised.into_bytes()).expect("failed to write to file"); 
+    
 
+    file.write_all(&serialised.into_bytes())
+        .expect("failed to write to file");
 }
 
 fn moodtracker_input_sys(settings: &Settings) {
@@ -155,4 +162,5 @@ fn main(){
         }
     }
 
+     
 }
