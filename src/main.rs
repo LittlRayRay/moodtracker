@@ -1,7 +1,5 @@
-/*
-tue
-*/
-#![allow(unused_variables)]
+#![allow(unused_variables, dead_code)]
+use std::io;
 use std::str::ParseBoolError;
 // use json::object; 
 use serde::Serialize;
@@ -35,6 +33,10 @@ fn init_settings (admin_setting: bool, times: u8) -> Settings{
     Settings::new(admin_setting, times)
 }
 
+/// Asks the user for how their day went and a date. 
+/// ```
+/// fn input_sytem() {};
+/// ```
 fn input_system(list: &mut Vec<Day>, settings: &Settings) {
         
     let mut count = 0;
@@ -57,7 +59,7 @@ fn input_system(list: &mut Vec<Day>, settings: &Settings) {
 
         match t {
             Ok(input) => {
-                println!("processing...");
+                println!("processing...\n - Saving Input \n \n Get ready to enter date of admission!");
 
                 let mut buffer = String::new(); 
 
@@ -93,91 +95,64 @@ fn write_to_file(list: &Vec<Day>){
 
 }
 
-fn main() {
-    // File reader and creat-er system thingy COPYRIGHT TheAverageAvocado 2022 https://github.com/LittlRayRay 
-   
-    let settings = init_settings(true, 2);
-
-    let mut exists: bool= false;
+fn moodtracker_input_sys(settings: &Settings) {
+    // File reader and creat-er system thingy COPYRIGHT ©️ TheAverageAvocado 2022 https://github.com/LittlRayRay 
     let mut list: Vec<Day> = Vec::new();
 
     if Path::new("save.json").exists(){
-        exists = true;
-    }
-    
-    if exists {
         let reader = BufReader::new(File::open("save.json").expect("failed to read save.json")); 
         list= serde_json::from_reader(reader).expect("file exists, could not read it");
     }
 
-    input_system(&mut list, &settings);
-
-    // Now we can insert our logic for the actual system here
-    // TODO Transfer old system, mostly same code. 
+    input_system(&mut list, settings);
 
     write_to_file(&list);
 
-    /*
+}
 
-    let file = File::create("test.json").expect("failed to open file");
-    
-    //let file_read = File::open("save.json").expect("failed to open file");
-    let reader = BufReader::new(file);
+fn clear_file() {
 
-    let mut list: Vec<Day>= serde_json::from_reader(reader).expect("read file");
-    
-    //let mut list: Vec<Day> = Vec::new();
-    let mut i = 0;
-    while i < 2{
-        'main: loop {
-            println!("Are you feeling good today?");
-            let mut input = String::new();
-              
-            std::io::stdin().read_line(&mut input).unwrap();
-              
-            let input_slice: &str = &input[..];
-            let t:Result<bool, ParseBoolError>= input_slice.trim().parse();
+    let blank = Vec::new();
 
-            match t {
-                Ok(input) => {
-                    println!("Thanks for the input!");
+    if Path::new("save.json").exists(){
+        write_to_file(&blank);
+    }
+}
 
-                    let mut buffer = String::new();
+fn main(){
 
-                    println!("Please enter today's date (YYYY-MM-DD)!");
+    let global_settings = init_settings(true, 2);
 
-                    std::io::stdin().read_line(&mut buffer).unwrap();
+    'cli: loop {
 
-                    buffer = buffer.trim().to_string();
-                    
-                    for day in &list{
-                        if day.date == buffer {
-                            println!("You have already done today's moodtracker!");
-                            break 'main;
-                        }
+        print!("> ");
 
-                    }
+        io::stdout().flush().unwrap();
 
-                    list.push(Day{date:buffer, feeling_good: input });
+        let mut input = String::new();
+        
+        std::io::stdin().read_line(&mut input).unwrap();
+            
+        // All commands in the cli api (?) 
+        //
+        // Very VERY dodgy way to handle commands
+        //
+        // TODO make this less dodgy
+        // - Maybe use a file to read commands, along with what they do?
+        
+        
 
-                    break;
-                    
-                },
-
-                Err(_error) => {println!("Something went wrong!"); println!("Please enter 'true' or 'false'!")}
-            }
+        input = String::from(input.trim()); 
+        match input.as_str() {
+            "help" => {println!("following commands can be used: 'new entry', 'exit', 'clear file'");}
+            "new entry" => {moodtracker_input_sys(&global_settings)}, 
+            "exit" => {break 'cli;},
+            "clear file" => {
+                clear_file();
+            },
+            "" => {println!("please enter a command.");},
+            _ => {println!("\"{}\" \x1b[91mError - Command not found!\x1b[0m", input.as_str());}
         }
-        i += 1;
-     }
-
-    println!("{:?}", list);
-
-    let serialised= serde_json::to_string(&list).unwrap();
-
-    println!("serialised = {}", serialised);
-
-   // file.write_all(&serialised.into_bytes()).expect("failed to write to file");
-    
-    */
+    }
 
 }
