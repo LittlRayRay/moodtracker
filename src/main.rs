@@ -1,7 +1,5 @@
-#![allow(unused_variables, dead_code)]
-use std::io;
 use std::str::ParseBoolError;
-// use json::object;
+use clap::Command;
 use serde::Deserialize;
 use serde::Serialize;
 use std::fs::File;
@@ -9,6 +7,9 @@ use std::io::prelude::*;
 use std::io::BufReader;
 use std::path::Path;
 use std::env;
+
+extern crate clap;
+use clap::command;
 
 // Data structure for each day, storing how the day went and the date.
 #[derive(Serialize, Deserialize, Debug)]
@@ -37,7 +38,9 @@ fn init_settings (admin_setting: bool, times: u8) -> Settings{
     Settings::new(admin_setting, times)
 }
 
-/// Asks the user for how their day went and a date. 
+// Massive block of code BEGIN
+
+/// Asks the user for how their day went and a date for the day. 
 /// ```
 /// fn input_sytem() {};
 /// ```
@@ -84,19 +87,41 @@ fn input_system(list: &mut Vec<Day>, settings: &Settings) {
                 });
             }
 
-            Err(err) => {
+            Err(_) => {
                 println!("Something went wrong");
             }
         }
     }
 }
 
-fn write_to_file(list: &Vec<Day>) {
-    let mut file = File::create("save.json").expect("failed to create file");
+// Massive block of code END
+/// Returns a list of all the previous days at location "./save.json" if none exists, returns an
+/// error.
+fn reader() -> Result<Vec<Day>, String>{ 
+    if Path::new("save.json").exists(){
+        let reader = BufReader::new(File::open("save.json").expect("failed to read save.json")); 
+        Ok(serde_json::from_reader(reader).expect("file exists, could not read it"))
+    } else {
+        let _file = File::create("save.json").expect("failed to create file");
+        Ok(Vec::<Day>::new())
+    }
+}
 
-    let serialised = serde_json::to_string_pretty(list).unwrap();
+fn append_to_file(list: &Vec<Day>) {
+    todo!()
+}
+
+fn write_to_file(list: &Vec<Day>) {
+    // error here maybe?
+    let mut file = File{};
+    if Path::new("save.json").exists(){
+        file = File::open("save.json").expect("couldn't open file");
+    } else {
+        file = File::create("save.json").expect("failed to create file");
+    }
 
     
+    let serialised = serde_json::to_string_pretty(list).unwrap();
 
     file.write_all(&serialised.into_bytes())
         .expect("failed to write to file");
@@ -104,63 +129,41 @@ fn write_to_file(list: &Vec<Day>) {
 
 fn moodtracker_input_sys(settings: &Settings) {
     // File reader and creat-er system thingy COPYRIGHT ©️ TheAverageAvocado 2022 https://github.com/LittlRayRay 
-    let mut list: Vec<Day> = Vec::new();
-
-    if Path::new("save.json").exists(){
-        let reader = BufReader::new(File::open("save.json").expect("failed to read save.json")); 
-        list= serde_json::from_reader(reader).expect("file exists, could not read it");
-    }
+    let mut list: Vec<Day> = reader().unwrap();
 
     input_system(&mut list, settings);
-
     write_to_file(&list);
-
 }
 
 fn clear_file() {
 
     let blank = Vec::new();
-
+    println!("successfully cleared file");
     if Path::new("save.json").exists(){
         write_to_file(&blank);
     }
 }
 
+
 fn main(){
-
-    let global_settings = init_settings(true, 2);
-
-    'cli: loop {
-
-        print!("> ");
-
-        io::stdout().flush().unwrap();
-
-        let mut input = String::new();
+    
+    let matches = command!()
+        .subcommand(
+            Command::new("new")
+                .about("makes a new entry in the moodtracker file!")
+            )
+        .subcommand(
+            Command::new("clear")
+                .about("clears the contents of the file")
+            ).get_matches();
+    
+    let global_settings = init_settings(true, 1);
         
-        std::io::stdin().read_line(&mut input).unwrap();
-            
-        // All commands in the cli api (?) 
-        //
-        // Very VERY dodgy way to handle commands
-        //
-        // TODO make this less dodgy
-        // - Maybe use a file to read commands, along with what they do?
-        
-        
-
-        input = String::from(input.trim()); 
-        match input.as_str() {
-            "help" => {println!("following commands can be used: 'new entry', 'exit', 'clear file'");}
-            "new entry" => {moodtracker_input_sys(&global_settings)}, 
-            "exit" => {break 'cli;},
-            "clear file" => {
-                clear_file();
-            },
-            "" => {println!("please enter a command.");},
-            _ => {println!("\"{}\" \x1b[91mError - Command not found!\x1b[0m", input.as_str());}
-        }
+    if let Some(_matches) = matches.subcommand_matches("new") {
+        moodtracker_input_sys(&global_settings);
     }
 
-     
+    if let Some(_) = matches.subcommand_matches("clear") {
+        clear_file();
+    }
 }
