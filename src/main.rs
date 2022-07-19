@@ -111,6 +111,8 @@ fn append_to_file(list: &Vec<Day>) {
     todo!()
 }
 
+// dani is a neek
+
 fn write_to_file(list: &Vec<Day>) {
     // error here maybe?
     let mut file = File{};
